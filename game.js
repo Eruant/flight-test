@@ -17,7 +17,9 @@ var Plane = function (x, y) {
 
 Plane.prototype.update = function () {
 
-  //this.forceY += world.gravity;
+  // TODO Add plane forces
+
+  this.forceY += world.gravity;
 
   this.x += this.forceX;
   this.y += this.forceY;
@@ -59,8 +61,10 @@ var Game = function (width, height) {
 
   this.createElements(width, height);
   this.plane = new Plane(width * 0.5, height * 0.5);
+  this.state = 'stopped';
 
   this.start();
+
 };
 
 Game.prototype.createElements = function (width, height) {
@@ -79,19 +83,27 @@ Game.prototype.createElements = function (width, height) {
 
 Game.prototype.start = function () {
 
+  this.state = 'playing';
+
   this.tick();
 
 };
 
 Game.prototype.stop = function () {
+
+  this.state = 'stopped';
 };
 
 Game.prototype.tick = function () {
 
-  this.update();
-  this.draw();
+  if (this.state === 'playing') {
 
-  window.requestAnimationFrame(this.tick.bind(this));
+    this.update();
+    this.draw();
+
+    window.requestAnimationFrame(this.tick.bind(this));
+
+  }
 
 };
 
@@ -117,5 +129,7 @@ window.onload = function () {
 };
 
 window.addEventListener('keydown', function() {
+
+  // TODO log key presses
   console.log('key pressed');
 }, false);
