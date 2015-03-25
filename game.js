@@ -2,7 +2,7 @@ var world = {
   width: 800,
   height: 600,
   gravity: 0.98,
-  drag: 0.99
+  drag: 0.976
 };
 
 var IO = function () {
@@ -65,6 +65,7 @@ var Plane = function (x, y) {
   this.forceY = 0;
 
   this.airSpeed = 0;
+  this.airSpeedAngle = 0;
 
   this.throttle = 0;
   this.pitch = 0;
@@ -72,11 +73,11 @@ var Plane = function (x, y) {
   this.maxAirSpeed = 10;
   this.maxThrottle = 0.1;
 
+  this.drag = 0;
+
 };
 
 Plane.prototype.update = function (input) {
-
-  var fX, fY;
 
   if (input.left && !input.right) {
     this.pitch -= 0.05;
@@ -96,23 +97,36 @@ Plane.prototype.update = function (input) {
     this.throttle = 0;
   }
 
-  this.airSpeed += this.throttle;
-  this.airSpeed *= world.drag;
+  // TODO work out why the plane only goes to the right...
 
   // thrust
-  fX = Math.cos(this.pitch) * this.airSpeed;
-  fY = Math.sin(this.pitch) * this.airSpeed;
+  this.forceX += Math.cos(this.pitch) * this.throttle * 5;
+  this.forceY += Math.sin(this.pitch) * this.throttle * 5;
+
+  // calculate air speed
+  this.airSpeed = Math.sqrt((this.forceX * this.forceX) + (this.forceY * this.forceY));
+
+  // calculate angle of vector
+  if (this.forceX !== 0 && this.airSpeed !== 0) {
+    this.airSpeedAngle = Math.asin(this.forceY / this.airSpeed);
+  } else {
+    this.airSpeedAngle = 0;
+  }
+  // add drag to air speed (in X direction)
+  this.forceX = Math.cos(this.airSpeedAngle) * (this.airSpeed * world.drag);
+  this.forceY = Math.sin(this.airSpeedAngle) * (this.airSpeed * world.drag);
+
+  // recalculate air speed
+  //this.airSpeed = Math.sqrt((this.forceX * this.forceX) + (this.forceY * this.forceY));
 
   // lift from wings
-  fX += Math.cos(this.pitch - 1.57079) * (this.airSpeed * 0.25);
-  fY += Math.sin(this.pitch - 1.57079) * (this.airSpeed * 0.25);
+  //this.forceX += Math.cos(this.pitch - 1.57079) * (this.airSpeed * 0.05);
+  //this.forceY += Math.sin(this.pitch - 1.57079) * (this.airSpeed * 0.05);
 
-  fY += world.gravity;
+  // add gravity
+  //this.forceY += world.gravity;
 
-  this.forceX += fX;
-  this.forceY += fY + world.gravity;
-  
-  var scale = 0.01;
+  var scale = 1;
 
   this.x += (this.forceX) * scale;
   this.y += (this.forceY) * scale;
@@ -123,13 +137,14 @@ Plane.prototype.update = function (input) {
     this.x -= world.width;
   }
 
-  if (this.y < 0) {
-    this.y = 0;
+  if (this.y < 50) {
+    this.y = 50;
   } else if (this.y > world.height - 100) {
-    this.forceY *= -0.5;
-    if (this.forceX > 0) {
-      this.forceX *= 0.99;
-    }
+    this.y = world.height - 100;
+    //this.forceY *= -0.5;
+    //if (this.forceX > 0) {
+      //this.forceX *= 0.99;
+    //}
   }
 
 };
@@ -159,7 +174,7 @@ Plane.prototype.draw = function (ctx) {
   ctx.translate(20, 20);
   ctx.fillStyle = 'hsl(180, 30%, 30%)';
 
-  ctx.fillText(Math.floor(this.forceY * 100) * 0.01, 0, 0);
+  ctx.fillText(this.airSpeed, 0, 0);
 
   ctx.fillRect(10, 0, 2, 50);
   ctx.fillStyle = 'hsl(0, 30%, 30%)';
