@@ -2,7 +2,7 @@ var world = {
   width: 800,
   height: 600,
   gravity: 0.98,
-  drag: 0.8
+  drag: 0.99
 };
 
 var IO = function () {
@@ -70,10 +70,13 @@ var Plane = function (x, y) {
   this.pitch = 0;
 
   this.maxAirSpeed = 10;
+  this.maxThrottle = 0.1;
 
 };
 
 Plane.prototype.update = function (input) {
+
+  var fX, fY;
 
   if (input.left && !input.right) {
     this.pitch -= 0.05;
@@ -82,30 +85,34 @@ Plane.prototype.update = function (input) {
   }
 
   if (input.up && !input.down) {
-    this.throttle += 0.05;
+    this.throttle += 0.005;
   } else if (!input.up && input.down) {
-    this.throttle -= 0.05;
+    this.throttle -= 0.005;
   }
 
-  if (this.throttle > 1) {
-    this.throttle = 1;
+  if (this.throttle > this.maxThrottle) {
+    this.throttle = this.maxThrottle;
   } else if (this.throttle < 0) {
     this.throttle = 0;
   }
 
-  this.airSpeed = (this.airSpeed * world.drag) + this.throttle;
+  this.airSpeed += this.throttle;
+  this.airSpeed *= world.drag;
 
   // thrust
-  this.forceX += Math.cos(this.pitch) * this.airSpeed;
-  this.forceY += Math.sin(this.pitch) * this.airSpeed;
+  fX = Math.cos(this.pitch) * this.airSpeed;
+  fY = Math.sin(this.pitch) * this.airSpeed;
 
-  // lift
-  this.forceX += Math.cos(this.pitch - 1.57079) * (this.airSpeed * 0.25);
-  this.forceY += Math.sin(this.pitch - 1.57079) * (this.airSpeed * 0.25);
+  // lift from wings
+  fX += Math.cos(this.pitch - 1.57079) * (this.airSpeed * 0.25);
+  fY += Math.sin(this.pitch - 1.57079) * (this.airSpeed * 0.25);
 
-  this.forceY += world.gravity;
+  fY += world.gravity;
+
+  this.forceX += fX;
+  this.forceY += fY + world.gravity;
   
-  var scale = 0.05;
+  var scale = 0.01;
 
   this.x += (this.forceX) * scale;
   this.y += (this.forceY) * scale;
@@ -116,12 +123,21 @@ Plane.prototype.update = function (input) {
     this.x -= world.width;
   }
 
+  if (this.y < 0) {
+    this.y = 0;
+  } else if (this.y > world.height - 100) {
+    this.forceY *= -0.5;
+    if (this.forceX > 0) {
+      this.forceX *= 0.99;
+    }
+  }
+
 };
 
 Plane.prototype.draw = function (ctx) {
 
   ctx.save();
-  ctx.translate(this.x, this.y);
+  ctx.translate(this.x, this.y - 15);
   ctx.rotate(this.pitch);
   ctx.fillStyle = 'hsl(180, 30%, 60%)';
 
@@ -143,11 +159,11 @@ Plane.prototype.draw = function (ctx) {
   ctx.translate(20, 20);
   ctx.fillStyle = 'hsl(180, 30%, 30%)';
 
-  ctx.fillText(Math.floor(this.airSpeed * 100) * 0.01, 0, 0);
+  ctx.fillText(Math.floor(this.forceY * 100) * 0.01, 0, 0);
 
   ctx.fillRect(10, 0, 2, 50);
   ctx.fillStyle = 'hsl(0, 30%, 30%)';
-  ctx.translate(0, 50 - (50 * this.throttle));
+  ctx.translate(0, 50 - (50 * (this.throttle / this.maxThrottle)));
   ctx.fillRect(0, 0, 20, 4);
   ctx.restore();
 
@@ -156,7 +172,7 @@ Plane.prototype.draw = function (ctx) {
 var Game = function (width, height) {
 
   this.createElements(width, height);
-  this.plane = new Plane(width * 0.5, height * 0.5);
+  this.plane = new Plane(width * 0.5, height - 100);
   this.io = new IO();
   this.state = 'stopped';
 
