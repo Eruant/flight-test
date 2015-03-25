@@ -2,6 +2,57 @@ var world = {
   gravity: 0.98
 };
 
+var IO = function () {
+
+  this.activeInput = {
+    up: false,
+    down: false,
+    left: false,
+    right: false
+  };
+
+  this.addEvents();
+
+};
+
+IO.prototype.addEvents = function () {
+
+  window.addEventListener('keydown', this.handleEvent.bind(this), false);
+  window.addEventListener('keyup', this.handleEvent.bind(this), false);
+
+};
+
+IO.prototype.handleEvent = function (e) {
+
+  switch (e.type) {
+    case 'keydown':
+      this.setKeyState(e.keyCode, true);
+      break;
+    case 'keyup':
+      this.setKeyState(e.keyCode, false);
+  }
+
+};
+
+IO.prototype.setKeyState = function (code, value) {
+
+  switch (code) {
+    case 37: // left
+      this.activeInput.left = value;
+      break;
+    case 39: // right
+      this.activeInput.right = value;
+      break;
+    case 38: // up
+      this.activeInput.up = value;
+      break;
+    case 40: // down
+      this.activeInput.down = value;
+      break;
+  }
+
+};
+
 var Plane = function (x, y) {
 
   this.x = x;
@@ -15,11 +66,29 @@ var Plane = function (x, y) {
 
 };
 
-Plane.prototype.update = function () {
+Plane.prototype.update = function (input) {
+
+  if (input.left && !input.right) {
+    this.pitch -= 0.05;
+  } else if (!input.left && input.right) {
+    this.pitch += 0.05;
+  }
+
+  if (input.up && !input.down) {
+    this.throttle += 0.05;
+  } else if (!input.up && input.down) {
+    this.throttle -= 0.05;
+  }
+
+  if (this.throttle > 1) {
+    this.throttle = 1;
+  } else if (this.throttle < 0) {
+    this.throttle = 0;
+  }
 
   // TODO Add plane forces
 
-  this.forceY += world.gravity;
+  //this.forceY += world.gravity;
 
   this.x += this.forceX;
   this.y += this.forceY;
@@ -61,6 +130,7 @@ var Game = function (width, height) {
 
   this.createElements(width, height);
   this.plane = new Plane(width * 0.5, height * 0.5);
+  this.io = new IO();
   this.state = 'stopped';
 
   this.start();
@@ -109,7 +179,7 @@ Game.prototype.tick = function () {
 
 Game.prototype.update = function () {
 
-  this.plane.update();
+  this.plane.update(this.io.activeInput);
 };
 
 Game.prototype.draw = function () {
@@ -127,9 +197,3 @@ Game.prototype.draw = function () {
 window.onload = function () {
   new Game(800, 600);
 };
-
-window.addEventListener('keydown', function() {
-
-  // TODO log key presses
-  console.log('key pressed');
-}, false);
