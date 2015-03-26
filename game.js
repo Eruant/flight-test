@@ -2,7 +2,8 @@ var world = {
   width: 800,
   height: 600,
   gravity: 0.98,
-  drag: 0.976
+  drag: 0.99,
+  limit: 20
 };
 
 var IO = function () {
@@ -107,24 +108,41 @@ Plane.prototype.update = function (input) {
   this.airSpeed = Math.sqrt((this.forceX * this.forceX) + (this.forceY * this.forceY));
 
   // calculate angle of vector
-  if (this.forceX !== 0 && this.airSpeed !== 0) {
-    this.airSpeedAngle = Math.asin(this.forceY / this.airSpeed);
-  } else {
-    this.airSpeedAngle = 0;
-  }
+  //if (this.airSpeed !== 0) {
+
+    //if (this.forceX > 0) {
+      //this.airSpeedAngle = Math.asin(this.forceX / this.airSpeed);
+    //} else {
+      //this.airSpeedAngle = Math.asin(this.forceY / this.airSpeed);
+    //}
+  //} else {
+    //this.airSpeedAngle = 0;
+  //}
   // add drag to air speed (in X direction)
-  this.forceX = Math.cos(this.airSpeedAngle) * (this.airSpeed * world.drag);
-  this.forceY = Math.sin(this.airSpeedAngle) * (this.airSpeed * world.drag);
+  //this.forceX = Math.cos(this.airSpeedAngle) * (this.airSpeed * world.drag);
+  //this.forceY = Math.sin(this.airSpeedAngle) * (this.airSpeed * world.drag);
 
   // recalculate air speed
   //this.airSpeed = Math.sqrt((this.forceX * this.forceX) + (this.forceY * this.forceY));
 
   // lift from wings
-  //this.forceX += Math.cos(this.pitch - 1.57079) * (this.airSpeed * 0.05);
-  //this.forceY += Math.sin(this.pitch - 1.57079) * (this.airSpeed * 0.05);
+  this.forceX += Math.cos(this.pitch - 1.57079) * (this.airSpeed * 0.05);
+  this.forceY += Math.sin(this.pitch - 1.57079) * (this.airSpeed * 0.05);
 
   // add gravity
-  //this.forceY += world.gravity;
+  this.forceY += world.gravity;
+
+  if (this.forceX > world.limit) {
+    this.forceX = world.limit;
+  } else if (this.forceX < -world.limit) {
+    this.forceX = -world.limit;
+  }
+
+  if (this.forceY > world.limit) {
+    this.forceY = world.limit;
+  } else if (this.forceY < -world.limit) {
+    this.forceY = -world.limit;
+  }
 
   var scale = 1;
 
@@ -141,6 +159,7 @@ Plane.prototype.update = function (input) {
     this.y = 50;
   } else if (this.y > world.height - 100) {
     this.y = world.height - 100;
+    this.forceY = 0;
     //this.forceY *= -0.5;
     //if (this.forceX > 0) {
       //this.forceX *= 0.99;
@@ -174,7 +193,7 @@ Plane.prototype.draw = function (ctx) {
   ctx.translate(20, 20);
   ctx.fillStyle = 'hsl(180, 30%, 30%)';
 
-  ctx.fillText(this.airSpeed, 0, 0);
+  ctx.fillText(Math.floor(this.airSpeed) + ':' + Math.floor(this.forceX) + ':' + Math.floor(this.forceY), 0, 0);
 
   ctx.fillRect(10, 0, 2, 50);
   ctx.fillStyle = 'hsl(0, 30%, 30%)';
