@@ -103,18 +103,30 @@ Plane.prototype.update = function (input) {
   this.forceX += Math.cos(this.pitch) * this.throttle * 5;
   this.forceY += Math.sin(this.pitch) * this.throttle * 5;
 
+  // TODO simplify this
+  //          /\
+  //         lift
+  //           |
+  // <- drag --+-- thrust ->
+  //           |
+  //         gravity
+  //          \/
+  //
+  //  lift should cancel out gravity when wings are level
+  //  drag should just be max limit on speed
+
   // calculate air speed
-  this.airSpeed = Math.sqrt((this.forceX * this.forceX) + (this.forceY * this.forceY));
+  //this.airSpeed = Math.sqrt((this.forceX * this.forceX) + (this.forceY * this.forceY));
 
   // calculate angle of vector
-  if (this.forceX !== 0 && this.airSpeed !== 0) {
-    this.airSpeedAngle = Math.asin(this.forceY / this.airSpeed);
-  } else {
-    this.airSpeedAngle = 0;
-  }
+  //if (this.forceX !== 0 && this.airSpeed !== 0) {
+    //this.airSpeedAngle = Math.asin(this.forceY / this.airSpeed);
+  //} else {
+    //this.airSpeedAngle = 0;
+  //}
   // add drag to air speed (in X direction)
-  this.forceX = Math.cos(this.airSpeedAngle) * (this.airSpeed * world.drag);
-  this.forceY = Math.sin(this.airSpeedAngle) * (this.airSpeed * world.drag);
+  //this.forceX = Math.cos(this.airSpeedAngle) * (this.airSpeed * world.drag);
+  //this.forceY = Math.sin(this.airSpeedAngle) * (this.airSpeed * world.drag);
 
   // recalculate air speed
   //this.airSpeed = Math.sqrt((this.forceX * this.forceX) + (this.forceY * this.forceY));
